@@ -6,6 +6,22 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		84B790042EC188FC0072B672 /* Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FF22EC184C20072B672 /* Notifications.swift */; };
+		84B790052EC1890B0072B672 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FFC2EC186470072B672 /* ContentView.swift */; };
+		84B790062EC1891B0072B672 /* GenerateUserID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FF32EC184E80072B672 /* GenerateUserID.swift */; };
+		84B790072EC189270072B672 /* WelcomeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FFB2EC185F20072B672 /* WelcomeScreen.swift */; };
+		84B790082EC1892A0072B672 /* HealthPermissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FFA2EC185CC0072B672 /* HealthPermissions.swift */; };
+		84B790092EC1892E0072B672 /* ThankYouScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FF92EC185B60072B672 /* ThankYouScreen.swift */; };
+		84B7900A2EC189310072B672 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FF82EC185A10072B672 /* Settings.swift */; };
+		84B7900B2EC189350072B672 /* SleepSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FF72EC185740072B672 /* SleepSummary.swift */; };
+		84B7900C2EC189380072B672 /* HomeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FF62EC185490072B672 /* HomeScreen.swift */; };
+		84B7900D2EC1893B0072B672 /* SetupScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FF52EC185320072B672 /* SetupScreen.swift */; };
+		84B7900E2EC189410072B672 /* SleepSyncer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FF12EC184950072B672 /* SleepSyncer.swift */; };
+		84B7900F2EC189480072B672 /* SupabaseClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FEF2EC184390072B672 /* SupabaseClient.swift */; };
+		84B790122EC18A270072B672 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 84B790112EC18A270072B672 /* Supabase */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		84B78FCC2EC1831B0072B672 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,11 +43,36 @@
 		84B78FBE2EC1831A0072B672 /* Inoxity.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Inoxity.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		84B78FCB2EC1831B0072B672 /* InoxityTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = InoxityTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		84B78FD52EC1831B0072B672 /* InoxityUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = InoxityUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		84B78FEF2EC184390072B672 /* SupabaseClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseClient.swift; sourceTree = "<group>"; };
+		84B78FF12EC184950072B672 /* SleepSyncer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepSyncer.swift; sourceTree = "<group>"; };
+		84B78FF22EC184C20072B672 /* Notifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notifications.swift; sourceTree = "<group>"; };
+		84B78FF32EC184E80072B672 /* GenerateUserID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateUserID.swift; sourceTree = "<group>"; };
+		84B78FF52EC185320072B672 /* SetupScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupScreen.swift; sourceTree = "<group>"; };
+		84B78FF62EC185490072B672 /* HomeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreen.swift; sourceTree = "<group>"; };
+		84B78FF72EC185740072B672 /* SleepSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepSummary.swift; sourceTree = "<group>"; };
+		84B78FF82EC185A10072B672 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		84B78FF92EC185B60072B672 /* ThankYouScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThankYouScreen.swift; sourceTree = "<group>"; };
+		84B78FFA2EC185CC0072B672 /* HealthPermissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthPermissions.swift; sourceTree = "<group>"; };
+		84B78FFB2EC185F20072B672 /* WelcomeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeScreen.swift; sourceTree = "<group>"; };
+		84B78FFC2EC186470072B672 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		84B790202EC18D000072B672 /* Exceptions for "Inoxity" folder in "Inoxity" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 84B78FBD2EC1831A0072B672 /* Inoxity */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		84B78FC02EC1831A0072B672 /* Inoxity */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				84B790202EC18D000072B672 /* Exceptions for "Inoxity" folder in "Inoxity" target */,
+			);
 			path = Inoxity;
 			sourceTree = "<group>";
 		};
@@ -52,6 +93,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				84B790122EC18A270072B672 /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,9 +117,12 @@
 		84B78FB52EC1831A0072B672 = {
 			isa = PBXGroup;
 			children = (
+				84B78FFD2EC1866C0072B672 /* Tests */,
+				84B78FF42EC185170072B672 /* UI */,
+				84B78FF02EC1848A0072B672 /* Services */,
+				84B78FEE2EC1842D0072B672 /* Data */,
 				84B78FC02EC1831A0072B672 /* Inoxity */,
-				84B78FCE2EC1831B0072B672 /* InoxityTests */,
-				84B78FD82EC1831B0072B672 /* InoxityUITests */,
+				84B790102EC18A180072B672 /* Frameworks */,
 				84B78FBF2EC1831A0072B672 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -90,6 +135,55 @@
 				84B78FD52EC1831B0072B672 /* InoxityUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		84B78FEE2EC1842D0072B672 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				84B78FEF2EC184390072B672 /* SupabaseClient.swift */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		84B78FF02EC1848A0072B672 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				84B78FF32EC184E80072B672 /* GenerateUserID.swift */,
+				84B78FF22EC184C20072B672 /* Notifications.swift */,
+				84B78FF12EC184950072B672 /* SleepSyncer.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		84B78FF42EC185170072B672 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				84B78FFC2EC186470072B672 /* ContentView.swift */,
+				84B78FFB2EC185F20072B672 /* WelcomeScreen.swift */,
+				84B78FFA2EC185CC0072B672 /* HealthPermissions.swift */,
+				84B78FF92EC185B60072B672 /* ThankYouScreen.swift */,
+				84B78FF82EC185A10072B672 /* Settings.swift */,
+				84B78FF72EC185740072B672 /* SleepSummary.swift */,
+				84B78FF62EC185490072B672 /* HomeScreen.swift */,
+				84B78FF52EC185320072B672 /* SetupScreen.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		84B78FFD2EC1866C0072B672 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				84B78FCE2EC1831B0072B672 /* InoxityTests */,
+				84B78FD82EC1831B0072B672 /* InoxityUITests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		84B790102EC18A180072B672 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -112,6 +206,7 @@
 			);
 			name = Inoxity;
 			packageProductDependencies = (
+				84B790112EC18A270072B672 /* Supabase */,
 			);
 			productName = Inoxity;
 			productReference = 84B78FBE2EC1831A0072B672 /* Inoxity.app */;
@@ -195,6 +290,9 @@
 			);
 			mainGroup = 84B78FB52EC1831A0072B672;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				84B790032EC187E50072B672 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 84B78FBF2EC1831A0072B672 /* Products */;
 			projectDirPath = "";
@@ -236,6 +334,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				84B790092EC1892E0072B672 /* ThankYouScreen.swift in Sources */,
+				84B790082EC1892A0072B672 /* HealthPermissions.swift in Sources */,
+				84B7900A2EC189310072B672 /* Settings.swift in Sources */,
+				84B790042EC188FC0072B672 /* Notifications.swift in Sources */,
+				84B7900B2EC189350072B672 /* SleepSummary.swift in Sources */,
+				84B7900E2EC189410072B672 /* SleepSyncer.swift in Sources */,
+				84B7900C2EC189380072B672 /* HomeScreen.swift in Sources */,
+				84B7900D2EC1893B0072B672 /* SetupScreen.swift in Sources */,
+				84B790072EC189270072B672 /* WelcomeScreen.swift in Sources */,
+				84B790062EC1891B0072B672 /* GenerateUserID.swift in Sources */,
+				84B7900F2EC189480072B672 /* SupabaseClient.swift in Sources */,
+				84B790052EC1890B0072B672 /* ContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -395,11 +505,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Inoxity/Inoxity.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = BG3424JAW4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Inoxity/Info.plist;
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This app requires access to your Health data for research purposes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -410,8 +524,9 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.Kee.Inoxity;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kee.inoxity;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -427,11 +542,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Inoxity/Inoxity.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = BG3424JAW4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Inoxity/Info.plist;
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This app requires access to your Health data for research purposes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -442,8 +561,9 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.Kee.Inoxity;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kee.inoxity;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -464,7 +584,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.Kee.InoxityTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kee.inoxityTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -486,7 +606,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.Kee.InoxityTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kee.inoxityTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -506,7 +626,7 @@
 				DEVELOPMENT_TEAM = BG3424JAW4;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.Kee.InoxityUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kee.inoxityUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -526,7 +646,7 @@
 				DEVELOPMENT_TEAM = BG3424JAW4;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.Kee.InoxityUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kee.inoxityUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -578,6 +698,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		84B790032EC187E50072B672 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase-community/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		84B790112EC18A270072B672 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 84B790032EC187E50072B672 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 84B78FB62EC1831A0072B672 /* Project object */;
 }
