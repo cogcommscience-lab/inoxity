@@ -55,6 +55,16 @@ struct ContentView: View {
                 .navigationSplitViewStyle(.balanced)
             }
         }
+        .onOpenURL { url in
+            // Handle Qualtrics deep link redirect - ensure we're on home screen to process it
+            print("ContentView received URL: \(url.absoluteString)")
+            if url.scheme == "inoxity" && url.host == "surveyComplete" {
+                // Navigate to home screen if not already there, so HomeView can handle it
+                if screen != .home {
+                    screen = .home
+                }
+            }
+        }
         .task {
             // Ask HealthKit whether requesting is necessary.
             let sleep = HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!

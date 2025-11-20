@@ -360,20 +360,32 @@ struct HomeView: View {
 private extension HomeView {
     // Handle Qualtrics deep link redirect
     func handleQualtricsReturn(_ url: URL) {
-        // Expect: keeapp://surveyComplete?type=...&sona=...&ts=...
-        guard url.scheme == "keeapp" else { return }
-        guard url.host == "surveyComplete" else { return }
-
-        let comps = URLComponents(url: url, resolvingAgainstBaseURL: false)
-        let items = comps?.queryItems ?? []
-
-        // optional: capture SONA
-        if let s = items.first(where: { $0.name == "sona" })?.value, !s.isEmpty {
-            sonaId = s
+        print("Received URL: \(url.absoluteString)")
+        
+        // Expect: inoxity://surveyComplete?type=...&sona=...&ts=...
+        guard url.scheme == "inoxity" else {
+            print("Unexpected scheme: \(url.scheme ?? "nil")")
+            return
+        }
+        
+        guard url.host == "surveyComplete" else {
+            print("Unexpected host: \(url.host ?? "nil")")
+            return
         }
 
-        // optional: read type for analytics/toast (not needed for streak logic)
-        let kind = items.first(where: { $0.name == "type" })?.value
+        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        let queryItems = components?.queryItems ?? []
+        
+        let type = queryItems.first(where: { $0.name == "type" })?.value
+        let sona = queryItems.first(where: { $0.name == "sona" })?.value
+        let ts = queryItems.first(where: { $0.name == "ts" })?.value
+        
+        print("host = \(url.host ?? "nil"), type = \(type ?? "nil"), sona = \(sona ?? "nil"), ts = \(ts ?? "nil")")
+
+        // optional: capture SONA
+        if let s = sona, !s.isEmpty {
+            sonaId = s
+        }
 
         // We intentionally do NOT touch `lastDayKey` here.
         // Daily rollover remains owned by `rolloverIfNeeded()` on launch/foreground.
@@ -381,7 +393,7 @@ private extension HomeView {
         maybeBumpStreak()
 
         // optional: quick feedback for QA
-        uploadMessage = "Survey recorded\(kind.map { " (\($0))" } ?? "")."
+        uploadMessage = "Survey recorded\(type.map { " (\($0))" } ?? "")."
         print("Qualtrics return handled: \(url.absoluteString)")
     }
 
