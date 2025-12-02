@@ -23,37 +23,92 @@ struct SetupScreen: View {
     }
 
     var body: some View {
-        VStack(spacing: 24) {
-            Text("Set up your account")
-                .font(.title.bold())
-
-            VStack(alignment: .leading, spacing: 12) {
-                Text("SONA ID")
-                    .font(.headline)
-                TextField("Enter your SONA ID", text: $sonaIdText)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled(true)
-                    .padding(12)
-                    .background(Color.gray.opacity(0.12))
-                    .cornerRadius(10)
-
-                Text("Average bedtime (this week)")
-                    .font(.headline)
-                DatePicker("Bedtime", selection: $bedtimeDate, displayedComponents: .hourAndMinute)
-                    .datePickerStyle(.wheel)
-                    .labelsHidden()
+        VStack(spacing: 32) {
+            Spacer()
+            
+            VStack(spacing: 8) {
+                Text("INOXITY")
+                    .font(.system(size: 32, weight: .light, design: .default))
+                    .kerning(6)
+                    .foregroundColor(.brandSecondary)
+                    .padding(.bottom, 8)
+                
+                Text("Set up your account")
+                    .font(.title.bold())
+                    .foregroundStyle(.white)
             }
+
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("SONA ID")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                    TextField("Enter your SONA ID", text: $sonaIdText)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled(true)
+                        .padding(12)
+                        .background(
+                            LinearGradient(
+                                colors: [Color.brandBackground.opacity(0.7), Color.brandCard],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(Color.brandSecondary.opacity(0.3), lineWidth: 1)
+                        )
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Average bedtime (this week)")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                    DatePicker("Bedtime", selection: $bedtimeDate, displayedComponents: .hourAndMinute)
+                        .datePickerStyle(.wheel)
+                        .labelsHidden()
+                        .colorScheme(.dark)
+                        .background(
+                            LinearGradient(
+                                colors: [Color.brandBackground.opacity(0.7), Color.brandCard],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+            }
+            .padding(.horizontal)
+
+            Spacer()
 
             Button(action: complete) {
                 Text("Continue")
+                    .fontWeight(.semibold)
+                    .padding(.vertical, 14)
                     .frame(maxWidth: .infinity)
+                    .background(
+                        Capsule()
+                            .fill(Color.brandPrimary)
+                    )
+                    .foregroundColor(.brandBackground)
+                    .shadow(radius: 6)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.pink)
-            .controlSize(.large)
             .disabled(sonaIdText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .opacity(sonaIdText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1)
+            .padding(.horizontal)
+            .padding(.bottom, 40)
         }
         .padding()
+        .background(
+            LinearGradient(
+                colors: [Color.brandBackground, Color.brandBackground.opacity(0.9)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
     }
 
     private func complete() {

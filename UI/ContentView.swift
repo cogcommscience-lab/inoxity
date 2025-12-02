@@ -57,12 +57,13 @@ struct ContentView: View {
         }
         .onOpenURL { url in
             // Handle Qualtrics deep link redirect - ensure we're on home screen to process it
-            print("ContentView received URL: \(url.absoluteString)")
-            if url.scheme == "inoxity" && url.host == "surveyComplete" {
+            print("🔗 ContentView received URL: \(url.absoluteString)")
+            if url.scheme == "inoxity" && url.host == "survey-complete" {
                 // Navigate to home screen if not already there, so HomeView can handle it
                 if screen != .home {
                     screen = .home
                 }
+                // Note: HomeView's onOpenURL will handle the actual processing
             }
         }
         .task {
@@ -95,12 +96,46 @@ struct SidebarView: View {
         List(selection: $selectedDestination) {
             NavigationLink(value: ContentView.NavigationDestination.home) {
                 Label("Home", systemImage: "house.fill")
+                    .foregroundStyle(.white)
             }
+            .listRowBackground(
+                LinearGradient(
+                    colors: [Color.brandBackground.opacity(0.7), Color.brandCard],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
             
             NavigationLink(value: ContentView.NavigationDestination.settings) {
                 Label("Settings", systemImage: "gearshape.fill")
+                    .foregroundStyle(.white)
+            }
+            .listRowBackground(
+                LinearGradient(
+                    colors: [Color.brandBackground.opacity(0.7), Color.brandCard],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+        }
+        .listStyle(.insetGrouped)
+        .background(
+            LinearGradient(
+                colors: [Color.brandBackground, Color.brandBackground.opacity(0.9)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .scrollContentBackground(.hidden)
+        .tint(.brandPrimary)
+        .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("INOXITY")
+                    .font(.system(size: 22, weight: .light, design: .default))
+                    .kerning(4)
+                    .foregroundColor(.brandSecondary)
             }
         }
-        .navigationTitle("Inoxity")
     }
 }

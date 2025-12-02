@@ -16,71 +16,162 @@ struct SettingsView: View {
     
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    HStack {
-                        Text("SONA ID")
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        if sonaId.isEmpty {
-                            Text("Not set")
-                                .foregroundStyle(.secondary)
-                        } else {
-                            Text(sonaId)
-                                .foregroundStyle(.secondary)
-                                .textSelection(.enabled)
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Research Information Card
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Research Information")
+                            .font(.headline)
+                            .foregroundStyle(.white.opacity(0.9))
+                        
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("SONA ID")
+                                .font(.caption)
+                                .foregroundStyle(.white.opacity(0.7))
+                            
+                            if sonaId.isEmpty {
+                                Text("Not set")
+                                    .font(.body)
+                                    .foregroundStyle(.white.opacity(0.6))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 12)
+                                    .padding(.horizontal, 16)
+                                    .background(Color.brandCard.opacity(0.5))
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                            } else {
+                                Text(sonaId)
+                                    .font(.title3.bold())
+                                    .foregroundStyle(.white)
+                                    .textSelection(.enabled)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 12)
+                                    .padding(.horizontal, 16)
+                                    .background(Color.brandCard)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                            }
                         }
+                        
+                        Text("Your SONA ID is used to link your app data with research participation.")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.6))
                     }
-                } header: {
-                    Text("Research Information")
-                } footer: {
-                    Text("Your SONA ID is used to link your app data with research participation.")
-                }
-                
-                Section {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
+                    .padding(20)
+                    .background(
+                        LinearGradient(
+                            colors: [Color.brandBackground.opacity(0.6), Color.brandCard],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    
+                    // Sleep Schedule Card
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Sleep Schedule")
+                            .font(.headline)
+                            .foregroundStyle(.white.opacity(0.9))
+                        
+                        VStack(alignment: .leading, spacing: 6) {
                             Text("Bedtime")
-                                .font(.headline)
+                                .font(.caption)
+                                .foregroundStyle(.white.opacity(0.7))
+                            
                             Text(formatBedtime())
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .font(.title2.bold())
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.vertical, 12)
+                                .padding(.horizontal, 16)
+                                .background(Color.brandCard)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
-                        Spacer()
-                        Button("Change") {
+                        
+                        Button {
                             updateSelectedBedtimeFromMinutes()
                             showBedtimePicker = true
+                        } label: {
+                            Text("Change")
+                                .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color.brandPrimary)
+                                .foregroundColor(.brandBackground)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
-                        .buttonStyle(.bordered)
+                        
+                        Text("Your bedtime is used to schedule evening survey notifications.")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.6))
                     }
-                } header: {
-                    Text("Sleep Schedule")
-                } footer: {
-                    Text("Your bedtime is used to schedule evening survey notifications.")
+                    .padding(20)
+                    .background(
+                        LinearGradient(
+                            colors: [Color.brandBackground.opacity(0.6), Color.brandCard],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 24)
+            }
+            .background(
+                LinearGradient(
+                    colors: [Color.brandBackground, Color.brandBackground.opacity(0.9)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .navigationTitle("")
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("INOXITY")
+                        .font(.system(size: 22, weight: .light, design: .default))
+                        .kerning(4)
+                        .foregroundColor(.brandSecondary)
                 }
             }
-            .navigationTitle("Settings")
             .sheet(isPresented: $showBedtimePicker) {
                 NavigationStack {
                     VStack(spacing: 20) {
                         Text("Set Your Bedtime")
                             .font(.title2.bold())
+                            .foregroundStyle(.white)
                             .padding(.top)
                         
                         DatePicker("Bedtime", selection: $selectedBedtime, displayedComponents: .hourAndMinute)
                             .datePickerStyle(.wheel)
                             .labelsHidden()
+                            .colorScheme(.dark)
                             .padding()
+                            .background(
+                                LinearGradient(
+                                    colors: [Color.brandBackground.opacity(0.7), Color.brandCard],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .padding(.horizontal)
                         
                         Spacer()
                     }
                     .padding()
+                    .background(
+                        LinearGradient(
+                            colors: [Color.brandBackground, Color.brandBackground.opacity(0.9)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         ToolbarItem(placement: .cancellationAction) {
                             Button("Cancel") {
                                 showBedtimePicker = false
                             }
+                            .foregroundColor(.white.opacity(0.8))
                         }
                         ToolbarItem(placement: .confirmationAction) {
                             Button("Save") {
@@ -90,10 +181,19 @@ struct SettingsView: View {
                                 bedtimeMinutes = hour * 60 + minute
                                 showBedtimePicker = false
                             }
+                            .foregroundColor(.brandPrimary)
+                            .fontWeight(.semibold)
                         }
                     }
                 }
                 .presentationDetents([.medium])
+                .presentationBackground(
+                    LinearGradient(
+                        colors: [Color.brandBackground, Color.brandBackground.opacity(0.95)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
             }
         }
     }

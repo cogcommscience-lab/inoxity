@@ -11,6 +11,14 @@ import UIKit
 import HealthKit
 import UniformTypeIdentifiers
 
+// MARK: - Brand Colors Extension
+extension Color {
+    static let brandBackground = Color(red: 0x21/255.0, green: 0x11/255.0, blue: 0x29/255.0)   // #211129
+    static let brandPrimary    = Color(red: 0xF4/255.0, green: 0xAB/255.0, blue: 0xAF/255.0)   // #F4ABAF
+    static let brandSecondary  = Color(red: 0x82/255.0, green: 0xD8/255.0, blue: 0xD8/255.0)   // #82D8D8
+    static let brandCard       = Color.brandBackground.opacity(0.35) // subtle lighter tint for cards
+}
+
 // MARK: - Simple model for the summary card
 struct SleepSummary {
     let totalAsleepSec: TimeInterval
@@ -20,6 +28,47 @@ struct SleepSummary {
     let awakeSec: TimeInterval
     let windowStart: Date
     let windowEnd: Date
+}
+
+// MARK: - Reusable Status Chip Component
+struct StatusChip: View {
+    let title: String
+    let isDone: Bool
+    var accent: Color = .brandSecondary
+
+    var body: some View {
+        Text(title)
+            .font(.caption)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 10)
+            .background(
+                Capsule().fill(isDone ? accent.opacity(0.25) : .clear)
+            )
+            .overlay(
+                Capsule().stroke(accent, lineWidth: 1)
+            )
+            .foregroundColor(isDone ? accent : .white.opacity(0.6))
+    }
+}
+
+// MARK: - Custom Button Style for Brand Primary
+struct BrandPrimaryButtonStyle: ButtonStyle {
+    var isEnabled: Bool = true
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .fontWeight(.semibold)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity)
+            .background(
+                Capsule()
+                    .fill(Color.brandPrimary)
+            )
+            .foregroundColor(.brandBackground)
+            .shadow(radius: 6)
+            .opacity(isEnabled ? 1 : 0.5)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+    }
 }
 
 struct HomeView: View {
@@ -38,20 +87,50 @@ struct HomeView: View {
 
     @State private var selectedVideoURL: URL?
     @State private var isUploading = false
-    @State private var uploadMessage = ""
 
     // MARK: - Lightweight streak state (persists)
     @AppStorage("streakCount") private var streakCount = 0
     @AppStorage("lastStreakDayKey") private var lastStreakDayKey = "" // "yyyy-MM-dd" of last increment
     @AppStorage("lastDayKey") private var lastDayKey = ""              // for daily rollover
     @AppStorage("didSleepToday") private var didSleepToday = false
-    @AppStorage("didSurveyToday") private var didSurveyToday = false
     @AppStorage("didUploadToday") private var didUploadToday = false
     @AppStorage("sonaId") private var sonaId: String = ""
     @AppStorage("bedtimeMinutes") private var bedtimeMinutes: Int = 23 * 60
+    
+    // Survey completion tracking: store completed dates as array of "yyyy-MM-dd" strings
+    private var completedSurveyDates: Set<String> {
+        get {
+            let array = UserDefaults.standard.stringArray(forKey: "completedSurveyDates") ?? []
+            return Set(array)
+        }
+        set {
+            UserDefaults.standard.set(Array(newValue), forKey: "completedSurveyDates")
+        }
+    }
+    
+    // Helper function to check if survey is completed today
+    // Reads directly from UserDefaults to ensure we get the latest value
+    private func checkSurveyCompletedToday() -> Bool {
+        let today = dayKey(Date())
+        let array = UserDefaults.standard.stringArray(forKey: "completedSurveyDates") ?? []
+        let dates = Set(array)
+        let result = dates.contains(today)
+        print("🔍 checkSurveyCompletedToday: today=\(today), result=\(result), dates=\(Array(dates).sorted())")
+        return result
+    }
+    
+    // Computed property: check if survey is completed today
+    // The surveyCompletionUpdateTrigger ensures SwiftUI refreshes when this changes
+    private var didSurveyToday: Bool {
+        // Access the trigger to make SwiftUI observe it
+        let _ = surveyCompletionUpdateTrigger
+        // Read directly from UserDefaults to get the latest value
+        return checkSurveyCompletedToday()
+    }
 
     @State private var showBedtimePicker = false
     @State private var selectedBedtime = Date()
+    @State private var surveyCompletionUpdateTrigger = UUID() // Triggers view refresh when survey completion changes
 
     @Environment(\.scenePhase) private var scenePhase
     private let healthStore = HKHealthStore()
@@ -66,10 +145,10 @@ struct HomeView: View {
 
         let todo: String
         if actions.isEmpty {
-            todo = "You’re all set for today! 🎉"
+            todo = "You're all set for today! 🎉"
         } else {
-            let list = ListFormatter.localizedString(byJoining: actions) ?? actions.joined(separator: ", ")
-            todo = "Don’t forget to \(list)!"
+            let list = ListFormatter.localizedString(byJoining: actions)
+            todo = "Don't forget to \(list)!"
         }
 
         let streak = streakCount > 0 ? " \(streakCount)-day streak! ⭐️" : ""
@@ -85,7 +164,7 @@ struct HomeView: View {
                 // Subtitle under the nav bar (can wrap freely)
                 Text(subtitle)
                     .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.8))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
                     .padding(.bottom, 12)
@@ -97,18 +176,25 @@ struct HomeView: View {
                 // Keep some space at the bottom so it feels centered/balanced
                 Spacer()
             }
+            .background(
+                LinearGradient(
+                    colors: [Color.brandBackground, Color.brandBackground.opacity(0.9)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("Inoxity")
-                        .font(.title.bold())
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.85)
+                    Text("INOXITY")
+                        .font(.system(size: 22, weight: .light, design: .default))
+                        .kerning(4)
+                        .foregroundColor(.brandSecondary)
                 }
             }
         }
+        .tint(.brandPrimary)
         // ---- top-level modifiers belong on the NavigationStack, not outside ----
         .onChange(of: pickerItem) { oldValue, newValue in
             guard let item = newValue else { return }
@@ -116,6 +202,7 @@ struct HomeView: View {
         }
         .task {
             rolloverIfNeeded() // reset today's flags if we crossed midnight
+            recalculateStreak() // ensure streak is up to date on launch
 
             guard !didStart else { return }
             didStart = true
@@ -134,18 +221,19 @@ struct HomeView: View {
             status = "Up to date ✅"
 
             await loadLastNightSummary()
-            maybeBumpStreak()
+            recalculateStreak()
         }
         .onChange(of: scenePhase) { oldPhase, phase in
             if phase == .active {
                 rolloverIfNeeded()
+                recalculateStreak() // ensure streak is up to date when app becomes active
                 Task {
                     status = "Syncing…"
                     try? await SleepSyncer().syncIncremental(userId: userId)
                     lastSyncedAt = Date()
                     status = "Up to date ✅"
                     await loadLastNightSummary()
-                    maybeBumpStreak()
+                    recalculateStreak()
                 }
             }
         }
@@ -157,22 +245,41 @@ struct HomeView: View {
                 VStack(spacing: 20) {
                     Text("Set Your Bedtime")
                         .font(.title2.bold())
+                        .foregroundStyle(.white)
                         .padding(.top)
                     
                     DatePicker("Bedtime", selection: $selectedBedtime, displayedComponents: .hourAndMinute)
                         .datePickerStyle(.wheel)
                         .labelsHidden()
+                        .colorScheme(.dark)
                         .padding()
+                        .background(
+                            LinearGradient(
+                                colors: [Color.brandBackground.opacity(0.7), Color.brandCard],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .padding(.horizontal)
                     
                     Spacer()
                 }
                 .padding()
+                .background(
+                    LinearGradient(
+                        colors: [Color.brandBackground, Color.brandBackground.opacity(0.9)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel") {
                             showBedtimePicker = false
                         }
+                        .foregroundColor(.white.opacity(0.8))
                     }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save") {
@@ -182,10 +289,19 @@ struct HomeView: View {
                             bedtimeMinutes = hour * 60 + minute
                             showBedtimePicker = false
                         }
+                        .foregroundColor(.brandPrimary)
+                        .fontWeight(.semibold)
                     }
                 }
             }
             .presentationDetents([.medium])
+            .presentationBackground(
+                LinearGradient(
+                    colors: [Color.brandBackground, Color.brandBackground.opacity(0.95)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
         }
         .onAppear {
             updateSelectedBedtimeFromMinutes()
@@ -205,42 +321,56 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Last night you slept for... 🌙💤")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.white.opacity(0.8))
 
                         Text(formatHMS(s.totalAsleepSec))
                             .font(.system(size: 36, weight: .bold, design: .rounded))
                             .monospacedDigit()
+                            .foregroundStyle(.white)
 
                         if let end = lastSyncedAt {
                             Text("Checked for new sleep data at \(formatTime(end))")
                                 .font(.footnote)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.white.opacity(0.7))
                         }
                     }
                     .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.thinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
+                    .background(
+                        LinearGradient(
+                            colors: [Color.brandBackground.opacity(0.7), Color.brandCard],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .shadow(color: .black.opacity(0.2), radius: 12, y: 4)
                 }
                 .buttonStyle(.plain)
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Last night you slept for... 🌙💤")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.white.opacity(0.8))
 
                     Text("No sleep data yet")
                         .font(.headline)
+                        .foregroundStyle(.white)
                     Text(status)
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.white.opacity(0.7))
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.thinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
+                .background(
+                    LinearGradient(
+                        colors: [Color.brandBackground.opacity(0.7), Color.brandCard],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .shadow(color: .black.opacity(0.2), radius: 12, y: 4)
             }
 
             // Bedtime Section
@@ -251,40 +381,49 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Your bedtime is set for")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.white.opacity(0.8))
                         Text(formatBedtime())
                             .font(.title2.bold())
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(.white)
                     }
                     Spacer()
                     Image(systemName: "chevron.right")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.white.opacity(0.7))
                         .font(.callout)
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.thinMaterial)
+                .background(
+                    LinearGradient(
+                        colors: [Color.brandBackground.opacity(0.7), Color.brandCard],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
+                .shadow(color: .black.opacity(0.2), radius: 12, y: 4)
             }
             .buttonStyle(.plain)
 
             // Streak badge + tiny checklist
-            HStack {
-                Label("\(streakCount)-day streak", systemImage: "star.fill")
-                    .padding(.horizontal, 12)
+            // Force SwiftUI to observe surveyCompletionUpdateTrigger by using it in the view
+            let _ = surveyCompletionUpdateTrigger // Make SwiftUI observe this state change
+            
+            HStack(spacing: 8) {
+                Text("\(streakCount)-day streak")
+                    .font(.caption.bold())
                     .padding(.vertical, 6)
-                    .background(Color.yellow.opacity(0.2))
-                    .clipShape(Capsule())
+                    .padding(.horizontal, 10)
+                    .background(Capsule().fill(Color.brandPrimary.opacity(0.25)))
+                    .foregroundColor(.brandPrimary)
 
                 Spacer()
 
-                HStack(spacing: 14) {
-                    checklistItem(title: "Sleep", done: didSleepToday)
-                    checklistItem(title: "Survey", done: didSurveyToday)
-                    checklistItem(title: "ST*", done: didUploadToday)
+                HStack(spacing: 8) {
+                    StatusChip(title: "Sleep",  isDone: didSleepToday,  accent: .brandSecondary)
+                    StatusChip(title: "Survey", isDone: didSurveyToday, accent: .brandSecondary)
+                    StatusChip(title: "ST*",    isDone: didUploadToday, accent: .brandSecondary)
                 }
-                .font(.footnote)
             }
 
             // Add / Upload controls
@@ -292,16 +431,15 @@ struct HomeView: View {
                 PhotosPicker("Upload Screen Time",
                              selection: $pickerItem,
                              matching: .any(of: [.images, .videos]))
-                    .buttonStyle(.borderedProminent)
-                    .tint(.pink)
-                    .controlSize(.large)
+                    .buttonStyle(BrandPrimaryButtonStyle(isEnabled: true))
 
                 Button(isUploading ? "Uploading…" : "Upload") {
                     Task { await uploadSelected() }
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.pink)
-                .controlSize(.large)
+                .buttonStyle(BrandPrimaryButtonStyle(
+                    isEnabled: !isUploading &&
+                    (selectedImageData != nil || selectedVideoURL != nil || selectedImage != nil)
+                ))
                 .disabled(
                     isUploading ||
                     (selectedImageData == nil && selectedVideoURL == nil && selectedImage == nil)
@@ -340,17 +478,11 @@ struct HomeView: View {
                 .cornerRadius(10)
             }
 
-            if !uploadMessage.isEmpty {
-                Text(uploadMessage)
-                    .font(.footnote)
-                    .foregroundStyle(uploadMessage.contains("Success") ? .green : .red)
-            }
-
             // Trust statement
             Text("Your data is stored securely and used only for research.      * ST = Screen Time")
                 .font(.footnote)
                 .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.7))
                 .padding(.top, 8)
         }
     }
@@ -360,41 +492,97 @@ struct HomeView: View {
 private extension HomeView {
     // Handle Qualtrics deep link redirect
     func handleQualtricsReturn(_ url: URL) {
-        print("Received URL: \(url.absoluteString)")
+        print("🔗 Received deep link: \(url.absoluteString)")
+        print("🔗 Current thread: \(Thread.isMainThread ? "Main" : "Background")")
         
-        // Expect: inoxity://surveyComplete?type=...&sona=...&ts=...
+        // Expect: inoxity://survey-complete?date=YYYY-MM-DD
         guard url.scheme == "inoxity" else {
-            print("Unexpected scheme: \(url.scheme ?? "nil")")
+            print("⚠️ Unexpected scheme: \(url.scheme ?? "nil")")
             return
         }
         
-        guard url.host == "surveyComplete" else {
-            print("Unexpected host: \(url.host ?? "nil")")
+        guard url.host == "survey-complete" else {
+            print("⚠️ Unexpected host: \(url.host ?? "nil"), expected 'survey-complete'")
             return
         }
 
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         let queryItems = components?.queryItems ?? []
         
-        let type = queryItems.first(where: { $0.name == "type" })?.value
-        let sona = queryItems.first(where: { $0.name == "sona" })?.value
-        let ts = queryItems.first(where: { $0.name == "ts" })?.value
+        // Parse date parameter or use today
+        let dateString = queryItems.first(where: { $0.name == "date" })?.value
+        let targetDate: Date
         
-        print("host = \(url.host ?? "nil"), type = \(type ?? "nil"), sona = \(sona ?? "nil"), ts = \(ts ?? "nil")")
-
-        // optional: capture SONA
+        if let dateStr = dateString {
+            // Parse the provided date
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            formatter.calendar = .current
+            formatter.locale = .current
+            formatter.timeZone = .current
+            
+            if let parsedDate = formatter.date(from: dateStr) {
+                targetDate = parsedDate
+                print("📅 Parsed date from URL: \(dateStr)")
+            } else {
+                print("⚠️ Could not parse date '\(dateStr)', using today")
+                targetDate = Date()
+            }
+        } else {
+            // No date provided, use today
+            targetDate = Date()
+            print("📅 No date parameter, using today")
+        }
+        
+        // Mark survey as completed for the target date
+        // onOpenURL is already called on the main thread, so we can call directly
+        markSurveyCompleted(for: targetDate)
+        
+        // Optional: capture other query parameters if needed
+        let sona = queryItems.first(where: { $0.name == "sona" })?.value
+        
         if let s = sona, !s.isEmpty {
             sonaId = s
         }
-
-        // We intentionally do NOT touch `lastDayKey` here.
-        // Daily rollover remains owned by `rolloverIfNeeded()` on launch/foreground.
-        didSurveyToday = true
-        maybeBumpStreak()
-
-        // optional: quick feedback for QA
-        uploadMessage = "Survey recorded\(type.map { " (\($0))" } ?? "")."
-        print("Qualtrics return handled: \(url.absoluteString)")
+        
+        let dateKey = dayKey(targetDate)
+        print("✅ Survey completion recorded for \(dateKey)")
+    }
+    
+    /// Mark a survey as completed for a specific date
+    /// This stores the completion date and recalculates the streak
+    func markSurveyCompleted(for date: Date) {
+        let dateKey = dayKey(date)
+        var dates = completedSurveyDates
+        dates.insert(dateKey)
+        
+        // Write directly to UserDefaults and synchronize to ensure it's written immediately
+        UserDefaults.standard.set(Array(dates), forKey: "completedSurveyDates")
+        UserDefaults.standard.synchronize() // Force immediate write (deprecated but still works)
+        
+        print("✅ Wrote to UserDefaults: \(Array(dates).sorted())")
+        
+        // CRITICAL: Update the trigger to force SwiftUI to refresh
+        // This must happen AFTER the UserDefaults write
+        surveyCompletionUpdateTrigger = UUID()
+        
+        // Verify the write was successful
+        let verifyArray = UserDefaults.standard.stringArray(forKey: "completedSurveyDates") ?? []
+        let verifySet = Set(verifyArray)
+        print("✅ Verified UserDefaults contains: \(Array(verifySet).sorted())")
+        print("✅ Today's date key: \(dayKey(Date()))")
+        print("✅ Date key in set: \(verifySet.contains(dayKey(Date())))")
+        
+        // Recalculate streak based on consecutive survey completions
+        recalculateStreak()
+        
+        print("✅ Marked survey completed for \(dateKey), trigger updated to \(surveyCompletionUpdateTrigger.uuidString.prefix(8))...")
+    }
+    
+    /// Check if a survey was completed on a specific date
+    func didCompleteSurvey(on date: Date) -> Bool {
+        let dateKey = dayKey(date)
+        return completedSurveyDates.contains(dateKey)
     }
 
     // Daily rollover: reset today's flags at midnight
@@ -403,19 +591,72 @@ private extension HomeView {
         if lastDayKey != today {
             lastDayKey = today
             didSleepToday = false
-            didSurveyToday = false
             didUploadToday = false
+            // Note: didSurveyToday is computed from completedSurveyDates, so no need to reset
         }
     }
 
-    // When all three tasks are done today, increment streak once
-    func maybeBumpStreak() {
-        guard didSleepToday && didSurveyToday && didUploadToday else { return }
-        let today = dayKey(Date())
-        if lastStreakDayKey != today {
-            streakCount += 1
-            lastStreakDayKey = today
+    // Recalculate streak based on consecutive days with completed surveys
+    func recalculateStreak() {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        
+        // Start from today and work backwards to find consecutive days
+        var currentDate = today
+        var consecutiveDays = 0
+        
+        // Check if today has a completed survey
+        if didCompleteSurvey(on: currentDate) {
+            consecutiveDays = 1
+            
+            // Count backwards for consecutive days
+            while true {
+                guard let previousDay = calendar.date(byAdding: .day, value: -1, to: currentDate) else { break }
+                let previousDayKey = dayKey(previousDay)
+                
+                if completedSurveyDates.contains(previousDayKey) {
+                    consecutiveDays += 1
+                    currentDate = previousDay
+                } else {
+                    break
+                }
+            }
+        } else {
+            // Today doesn't have a survey, check backwards from yesterday
+            guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today) else {
+                streakCount = 0
+                return
+            }
+            
+            if didCompleteSurvey(on: yesterday) {
+                consecutiveDays = 1
+                currentDate = yesterday
+                
+                // Count backwards for consecutive days
+                while true {
+                    guard let previousDay = calendar.date(byAdding: .day, value: -1, to: currentDate) else { break }
+                    let previousDayKey = dayKey(previousDay)
+                    
+                    if completedSurveyDates.contains(previousDayKey) {
+                        consecutiveDays += 1
+                        currentDate = previousDay
+                    } else {
+                        break
+                    }
+                }
+            }
         }
+        
+        streakCount = consecutiveDays
+        print("📊 Streak recalculated: \(streakCount) days")
+    }
+
+    // Legacy function: When all three tasks are done today, increment streak once
+    // This is kept for backward compatibility with sleep/upload tracking
+    func maybeBumpStreak() {
+        // Note: Streak is now based on survey completions only, not all three tasks
+        // This function is kept for compatibility but recalculates based on surveys
+        recalculateStreak()
     }
 
     func dayKey(_ d: Date) -> String {
@@ -478,7 +719,7 @@ private extension HomeView {
                 )
                 if totalAsleep > 0 {
                     didSleepToday = true
-                    maybeBumpStreak()
+                    // Note: Streak is now based on survey completions only
                 }
             }
         } catch {
@@ -512,7 +753,6 @@ private extension HomeView {
                     selectedImageData = data
                     selectedImageExt = ext.isEmpty ? "jpg" : ext
                     selectedImageMime = mime
-                    uploadMessage = "Image selected."
                     return
                 } catch {
                     // fall through to Data path
@@ -526,11 +766,9 @@ private extension HomeView {
                 selectedImageData = data
                 selectedImageExt = ext
                 selectedImageMime = mime
-                uploadMessage = "Image selected."
                 return
             }
 
-            uploadMessage = "Couldn’t load image."
             return
         }
 
@@ -541,7 +779,6 @@ private extension HomeView {
                 selectedImageData = nil
                 selectedImageExt = nil
                 selectedImageMime = nil
-                uploadMessage = "Video selected."
                 return
             } else if let data = try? await item.loadTransferable(type: Data.self) {
                 let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mov")
@@ -552,18 +789,13 @@ private extension HomeView {
                     selectedImageData = nil
                     selectedImageExt = nil
                     selectedImageMime = nil
-                    uploadMessage = "Video selected."
                 } catch {
-                    uploadMessage = "Couldn’t prepare video."
+                    // Couldn't prepare video
                 }
                 return
             }
-
-            uploadMessage = "Couldn’t load video."
             return
         }
-
-        uploadMessage = "Unsupported media type."
     }
 
     func resetSelection() {
@@ -577,7 +809,6 @@ private extension HomeView {
     // Upload
     func uploadSelected() async {
         isUploading = true
-        uploadMessage = ""
         defer { isUploading = false }
 
         do {
@@ -587,27 +818,22 @@ private extension HomeView {
                 try await SupabaseClient.shared.uploadImageDataAndRecord(
                     data, ext: ext, mime: mime, userId: userId
                 )
-                uploadMessage = "Success: image uploaded."
                 didUploadToday = true
-                maybeBumpStreak()
+                // Note: Streak is now based on survey completions only
                 resetSelection()
             } else if let img = selectedImage {
                 try await SupabaseClient.shared.uploadImageAndRecord(img, userId: userId)
-                uploadMessage = "Success: image uploaded."
                 didUploadToday = true
-                maybeBumpStreak()
+                // Note: Streak is now based on survey completions only
                 resetSelection()
             } else if let url = selectedVideoURL {
                 try await SupabaseClient.shared.uploadVideoAndRecord(fileURL: url, userId: userId)
-                uploadMessage = "Success: video uploaded."
                 didUploadToday = true
-                maybeBumpStreak()
+                // Note: Streak is now based on survey completions only
                 resetSelection()
-            } else {
-                uploadMessage = "Nothing selected."
             }
         } catch {
-            uploadMessage = "Upload failed: \(error.localizedDescription)"
+            // Upload failed
         }
     }
 
