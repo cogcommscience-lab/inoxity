@@ -316,7 +316,7 @@ struct HomeView: View {
             // Sleep Summary Card
             if let s = sleepSummary {
                 NavigationLink {
-                    SleepSummaryView(sleepSummary: s, lastSyncedAt: lastSyncedAt)
+                    SleepSummaryPageView()
                 } label: {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Last night you slept for... 🌙💤")

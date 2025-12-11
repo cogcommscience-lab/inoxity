@@ -24,9 +24,13 @@ final class SleepSyncer {
     // One-time history pull (e.g., last 30–90 days)
     func backfill(userId: UUID, days: Int = 30) async throws {
         guard HKHealthStore.isHealthDataAvailable() else { return }
-        let end = Date()
-        let start = Calendar.current.date(byAdding: .day, value: -days, to: end)!
-        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
+        let endDate = Date()
+        let startDate = Calendar.current.date(byAdding: .day, value: -30, to: endDate)!
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startDate,
+            end: endDate,
+            options: .strictStartDate
+        )
 
         let samples = try await fetchSamples(predicate: predicate)
         try await upload(samples: samples, userId: userId)
@@ -125,14 +129,29 @@ private extension SleepSyncer {
     }
 
     func fetchWithAnchor(_ anchor: HKQueryAnchor?) async throws -> ([HKCategorySample], HKQueryAnchor) {
-        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<([HKCategorySample], HKQueryAnchor), Error>) in
+        let endDate = Date()
+        let startDate = Calendar.current.date(byAdding: .day, value: -30, to: endDate)!
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startDate,
+            end: endDate,
+            options: .strictStartDate
+        )
+        
+        return try await withCheckedThrowingContinuation { (cont: CheckedContinuation<([HKCategorySample], HKQueryAnchor), Error>) in
             let q = HKAnchoredObjectQuery(type: sleepType,
-                                          predicate: nil,
+                                          predicate: predicate,
                                           anchor: anchor,
                                           limit: HKObjectQueryNoLimit) { _, added, _, newAnchor, error in
-                if let error = error { cont.resume(throwing: error); return }
+                if let error = error {
+                    cont.resume(throwing: error)
+                    return
+                }
+                guard let newAnchor = newAnchor else {
+                    cont.resume(throwing: NSError(domain: "SleepSyncer", code: -1, userInfo: [NSLocalizedDescriptionKey: "HKAnchoredObjectQuery returned nil anchor"]))
+                    return
+                }
                 let samples = (added as? [HKCategorySample]) ?? []
-                cont.resume(returning: (samples, newAnchor!))
+                cont.resume(returning: (samples, newAnchor))
             }
             healthStore.execute(q)
         }
@@ -141,7 +160,14 @@ private extension SleepSyncer {
     func upload(samples: [HKCategorySample], userId: UUID) async throws {
         guard !samples.isEmpty else { return }
 
-        let rows: [SleepRow] = samples.map { s in
+        let now = Date()
+        let last30 = Calendar.current.date(byAdding: .day, value: -30, to: now)!
+
+        let recentSamples = samples.filter {
+            $0.startDate >= last30 && $0.startDate <= now
+        }
+
+        let rows: [SleepRow] = recentSamples.map { s in
             SleepRow(
                 user_id: userId,
                 hk_uuid: s.uuid,

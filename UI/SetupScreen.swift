@@ -10,6 +10,8 @@ import SwiftUI
 struct SetupScreen: View {
     @State private var sonaIdText: String
     @State private var bedtimeDate: Date
+    @State private var isSaving = false
+    @State private var errorMessage: String?
     var onComplete: (_ sonaId: String, _ bedtimeMinutes: Int) -> Void
 
     init(initialSonaId: String, initialBedtimeMinutes: Int, onComplete: @escaping (_ sonaId: String, _ bedtimeMinutes: Int) -> Void) {
@@ -84,20 +86,34 @@ struct SetupScreen: View {
 
             Spacer()
 
-            Button(action: complete) {
-                Text("Continue")
-                    .fontWeight(.semibold)
-                    .padding(.vertical, 14)
-                    .frame(maxWidth: .infinity)
-                    .background(
-                        Capsule()
-                            .fill(Color.brandPrimary)
-                    )
-                    .foregroundColor(.brandBackground)
-                    .shadow(radius: 6)
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .padding(.horizontal)
             }
-            .disabled(sonaIdText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            .opacity(sonaIdText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1)
+            
+            Button(action: complete) {
+                HStack {
+                    if isSaving {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .brandBackground))
+                            .scaleEffect(0.8)
+                    }
+                    Text("Continue")
+                        .fontWeight(.semibold)
+                }
+                .padding(.vertical, 14)
+                .frame(maxWidth: .infinity)
+                .background(
+                    Capsule()
+                        .fill(Color.brandPrimary)
+                )
+                .foregroundColor(.brandBackground)
+                .shadow(radius: 6)
+            }
+            .disabled(sonaIdText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSaving)
+            .opacity(sonaIdText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSaving ? 0.5 : 1)
             .padding(.horizontal)
             .padding(.bottom, 40)
         }
@@ -112,10 +128,37 @@ struct SetupScreen: View {
     }
 
     private func complete() {
-        let comps = Calendar.current.dateComponents([.hour, .minute], from: bedtimeDate)
-        let h = comps.hour ?? 23
-        let m = comps.minute ?? 0
-        let minutes = h * 60 + m
-        onComplete(sonaIdText.trimmingCharacters(in: .whitespacesAndNewlines), minutes)
+        let trimmedID = sonaIdText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedID.isEmpty else { return }
+        
+        isSaving = true
+        errorMessage = nil
+        
+        let deviceUUID = DeviceIDProvider.shared.deviceUUID
+        
+        Task {
+            do {
+                try await SupabaseClient.shared.upsertParticipant(deviceUUID: deviceUUID, sonaID: trimmedID)
+                
+                // Save to UserDefaults on success
+                UserDefaults.standard.set(trimmedID, forKey: "sonaId")
+                
+                // Proceed to next step
+                await MainActor.run {
+                    let comps = Calendar.current.dateComponents([.hour, .minute], from: bedtimeDate)
+                    let h = comps.hour ?? 23
+                    let m = comps.minute ?? 0
+                    let minutes = h * 60 + m
+                    isSaving = false
+                    onComplete(trimmedID, minutes)
+                }
+            } catch {
+                print("Error saving SONA ID to Supabase: \(error)")
+                await MainActor.run {
+                    isSaving = false
+                    errorMessage = "Failed to save SONA ID. Please try again."
+                }
+            }
+        }
     }
 }

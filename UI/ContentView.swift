@@ -10,7 +10,7 @@ import HealthKit
 
 struct ContentView: View {
     enum Screen { case welcome, permission, thankYou, setup, home }
-    enum NavigationDestination { case home, settings }
+    enum NavigationDestination { case home, aboutStudy, sleepSummary, settings }
 
     @State private var screen: Screen = .welcome
     @State private var selectedDestination: NavigationDestination? = .home
@@ -45,6 +45,10 @@ struct ContentView: View {
                     Group {
                         if selectedDestination == .home {
                             HomeView()
+                        } else if selectedDestination == .aboutStudy {
+                            AboutStudyView()
+                        } else if selectedDestination == .sleepSummary {
+                            SleepSummaryPageView()
                         } else if selectedDestination == .settings {
                             SettingsView()
                         } else {
@@ -96,6 +100,30 @@ struct SidebarView: View {
         List(selection: $selectedDestination) {
             NavigationLink(value: ContentView.NavigationDestination.home) {
                 Label("Home", systemImage: "house.fill")
+                    .foregroundStyle(.white)
+            }
+            .listRowBackground(
+                LinearGradient(
+                    colors: [Color.brandBackground.opacity(0.7), Color.brandCard],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            
+            NavigationLink(value: ContentView.NavigationDestination.aboutStudy) {
+                Label("About This Study", systemImage: "info.circle.fill")
+                    .foregroundStyle(.white)
+            }
+            .listRowBackground(
+                LinearGradient(
+                    colors: [Color.brandBackground.opacity(0.7), Color.brandCard],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            
+            NavigationLink(value: ContentView.NavigationDestination.sleepSummary) {
+                Label("Sleep Summary", systemImage: "moon.zzz.fill")
                     .foregroundStyle(.white)
             }
             .listRowBackground(

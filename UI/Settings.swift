@@ -13,6 +13,9 @@ struct SettingsView: View {
     
     @State private var showBedtimePicker = false
     @State private var selectedBedtime = Date()
+    @State private var editingSonaId: String = ""
+    @State private var isSavingSonaId = false
+    @State private var sonaIdStatusMessage: String?
     
     var body: some View {
         NavigationStack {
@@ -29,26 +32,40 @@ struct SettingsView: View {
                                 .font(.caption)
                                 .foregroundStyle(.white.opacity(0.7))
                             
-                            if sonaId.isEmpty {
-                                Text("Not set")
-                                    .font(.body)
-                                    .foregroundStyle(.white.opacity(0.6))
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.vertical, 12)
-                                    .padding(.horizontal, 16)
-                                    .background(Color.brandCard.opacity(0.5))
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                            } else {
-                                Text(sonaId)
-                                    .font(.title3.bold())
-                                    .foregroundStyle(.white)
-                                    .textSelection(.enabled)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.vertical, 12)
-                                    .padding(.horizontal, 16)
-                                    .background(Color.brandCard)
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                            TextField("Enter your SONA ID", text: $editingSonaId)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled(true)
+                                .padding(12)
+                                .background(Color.brandCard)
+                                .foregroundStyle(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                            
+                            if let statusMessage = sonaIdStatusMessage {
+                                Text(statusMessage)
+                                    .font(.caption)
+                                    .foregroundStyle(statusMessage.contains("Error") ? .red : .green)
                             }
+                            
+                            Button {
+                                saveSonaId()
+                            } label: {
+                                HStack {
+                                    if isSavingSonaId {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .brandBackground))
+                                            .scaleEffect(0.8)
+                                    }
+                                    Text("Save SONA ID")
+                                        .fontWeight(.semibold)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color.brandPrimary)
+                                .foregroundColor(.brandBackground)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                            }
+                            .disabled(editingSonaId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSavingSonaId)
+                            .opacity(editingSonaId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSavingSonaId ? 0.5 : 1)
                         }
                         
                         Text("Your SONA ID is used to link your app data with research participation.")
@@ -123,6 +140,9 @@ struct SettingsView: View {
                     endPoint: .bottomTrailing
                 )
             )
+            .onAppear {
+                editingSonaId = sonaId
+            }
             .navigationTitle("")
             .toolbar {
                 ToolbarItem(placement: .principal) {
@@ -233,4 +253,49 @@ struct SettingsView: View {
         f.timeStyle = .short   // e.g., "7:43 AM"
         return f
     }()
+    
+    private func saveSonaId() {
+        let trimmedID = editingSonaId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedID.isEmpty else { return }
+        
+        isSavingSonaId = true
+        sonaIdStatusMessage = nil
+        
+        let deviceUUID = DeviceIDProvider.shared.deviceUUID
+        
+        Task {
+            do {
+                try await SupabaseClient.shared.upsertParticipant(deviceUUID: deviceUUID, sonaID: trimmedID)
+                
+                // Save to UserDefaults on success
+                await MainActor.run {
+                    sonaId = trimmedID
+                    isSavingSonaId = false
+                    sonaIdStatusMessage = "SONA ID saved"
+                    
+                    // Clear status message after 3 seconds
+                    Task {
+                        try? await Task.sleep(nanoseconds: 3_000_000_000)
+                        await MainActor.run {
+                            sonaIdStatusMessage = nil
+                        }
+                    }
+                }
+            } catch {
+                print("Error saving SONA ID to Supabase: \(error)")
+                await MainActor.run {
+                    isSavingSonaId = false
+                    sonaIdStatusMessage = "Error saving SONA ID"
+                    
+                    // Clear error message after 5 seconds
+                    Task {
+                        try? await Task.sleep(nanoseconds: 5_000_000_000)
+                        await MainActor.run {
+                            sonaIdStatusMessage = nil
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

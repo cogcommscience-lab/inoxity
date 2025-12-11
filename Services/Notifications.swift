@@ -71,7 +71,14 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         content.body = body
         content.sound = .default
         content.categoryIdentifier = "SURVEY_CATEGORY"
-        content.userInfo = ["url": buildSurveyURL(baseURL: baseURL, userId: userId, extras: extras).absoluteString]
+        
+        // Build userInfo with URL and notification type for streak tracking
+        // Tag bedtime/evening notification so we can detect it when tapped
+        var userInfo: [String: Any] = ["url": buildSurveyURL(baseURL: baseURL, userId: userId, extras: extras).absoluteString]
+        if identifier == "EMA_Evening" {
+            userInfo["type"] = "bedtimeReminder"
+        }
+        content.userInfo = userInfo
 
         // Calculate the target time for today
         let calendar = Calendar.current
@@ -189,6 +196,19 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         let info = response.notification.request.content.userInfo
         let urlString = info["url"] as? String
+        
+        // Check if this is the bedtime/evening notification tap for streak tracking
+        // Detect using either the identifier or userInfo["type"]
+        let request = response.notification.request
+        let isBedtimeNotification = request.identifier == "EMA_Evening" || 
+                                     request.identifier.hasPrefix("EMA_Evening") ||
+                                     (info["type"] as? String) == "bedtimeReminder"
+        
+        if isBedtimeNotification {
+            // Mark today's streak as completed when user taps the evening notification
+            StreakManager.shared.markTodayCompletedFromNotification()
+            print("🔔 Bedtime notification tapped - streak updated")
+        }
 
         switch response.actionIdentifier {
         case IDs.actionSnooze:

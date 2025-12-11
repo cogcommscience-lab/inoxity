@@ -20,6 +20,9 @@
 		84B7900E2EC189410072B672 /* SleepSyncer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FF12EC184950072B672 /* SleepSyncer.swift */; };
 		84B7900F2EC189480072B672 /* SupabaseClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FEF2EC184390072B672 /* SupabaseClient.swift */; };
 		84B790122EC18A270072B672 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 84B790112EC18A270072B672 /* Supabase */; };
+		84B790132EC18A500072B672 /* DeviceIDProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FFD2EC186500072B672 /* DeviceIDProvider.swift */; };
+		84B790142EC18A510072B672 /* StreakManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B78FFE2EC186510072B672 /* StreakManager.swift */; };
+		96CF7A062EEAA30A00DF9ECC /* AboutStudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96CF7A052EEAA30A00DF9ECC /* AboutStudyView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +58,9 @@
 		84B78FFA2EC185CC0072B672 /* HealthPermissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthPermissions.swift; sourceTree = "<group>"; };
 		84B78FFB2EC185F20072B672 /* WelcomeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeScreen.swift; sourceTree = "<group>"; };
 		84B78FFC2EC186470072B672 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		84B78FFD2EC186500072B672 /* DeviceIDProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIDProvider.swift; sourceTree = "<group>"; };
+		84B78FFE2EC186510072B672 /* StreakManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakManager.swift; sourceTree = "<group>"; };
+		96CF7A052EEAA30A00DF9ECC /* AboutStudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutStudyView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -148,9 +154,11 @@
 		84B78FF02EC1848A0072B672 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				84B78FFD2EC186500072B672 /* DeviceIDProvider.swift */,
 				84B78FF32EC184E80072B672 /* GenerateUserID.swift */,
 				84B78FF22EC184C20072B672 /* Notifications.swift */,
 				84B78FF12EC184950072B672 /* SleepSyncer.swift */,
+				84B78FFE2EC186510072B672 /* StreakManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -158,6 +166,7 @@
 		84B78FF42EC185170072B672 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				96CF7A052EEAA30A00DF9ECC /* AboutStudyView.swift */,
 				84B78FFC2EC186470072B672 /* ContentView.swift */,
 				84B78FFB2EC185F20072B672 /* WelcomeScreen.swift */,
 				84B78FFA2EC185CC0072B672 /* HealthPermissions.swift */,
@@ -337,9 +346,12 @@
 				84B790092EC1892E0072B672 /* ThankYouScreen.swift in Sources */,
 				84B790082EC1892A0072B672 /* HealthPermissions.swift in Sources */,
 				84B7900A2EC189310072B672 /* Settings.swift in Sources */,
+				84B790132EC18A500072B672 /* DeviceIDProvider.swift in Sources */,
+				84B790142EC18A510072B672 /* StreakManager.swift in Sources */,
 				84B790042EC188FC0072B672 /* Notifications.swift in Sources */,
 				84B7900B2EC189350072B672 /* SleepSummary.swift in Sources */,
 				84B7900E2EC189410072B672 /* SleepSyncer.swift in Sources */,
+				96CF7A062EEAA30A00DF9ECC /* AboutStudyView.swift in Sources */,
 				84B7900C2EC189380072B672 /* HomeScreen.swift in Sources */,
 				84B7900D2EC1893B0072B672 /* SetupScreen.swift in Sources */,
 				84B790072EC189270072B672 /* WelcomeScreen.swift in Sources */,

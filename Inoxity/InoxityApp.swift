@@ -13,6 +13,7 @@ struct KeeAppApp: App {
     private let surveyMorningURL = URL(string: "https://ucdavis.co1.qualtrics.com/jfe/form/SV_3lyi79274NwvyqW")!
     private let surveyEveningURL = URL(string: "https://ucdavis.co1.qualtrics.com/jfe/form/SV_3lyi79274NwvyqW")!
     @AppStorage("bedtimeMinutes") private var bedtimeMinutes: Int = 23 * 60
+    @StateObject private var supabaseService = SupabaseClient.shared
 
     init() {
         // Set the delegate early so taps work on cold start
@@ -22,6 +23,7 @@ struct KeeAppApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(supabaseService)
                 .task {
                     let granted = await NotificationService.shared.requestAuthorization()
                     guard granted else { return }
