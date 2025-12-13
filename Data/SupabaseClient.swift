@@ -105,12 +105,27 @@ final class SupabaseClient: ObservableObject {
             return
         }
         
-        let participant = Participant(device_uuid: deviceUUID, sona_id: sonaID)
+        let participant = Participant(device_uuid: deviceUUID, sona_id: sonaID, is_active: true)
+        
+        print("Attempting to upsert participant: device_uuid=\(deviceUUID), sona_id=\(sonaID)")
 
-        _ = try await client.database
-            .from("participants")
-            .upsert(participant, onConflict: "device_uuid")
-            .execute()
+        do {
+            _ = try await client.database
+                .from("participants")
+                .upsert(participant, onConflict: "device_uuid")
+                .execute()
+            
+            print("Successfully upserted participant")
+        } catch {
+            print("❌ Error upserting participant: \(error)")
+            print("Error type: \(type(of: error))")
+            print("Error description: \(error.localizedDescription)")
+            if let nsError = error as NSError? {
+                print("NSError domain: \(nsError.domain), code: \(nsError.code)")
+                print("NSError userInfo: \(nsError.userInfo)")
+            }
+            throw error
+        }
     }
 
     // MARK: - Media uploads
@@ -316,6 +331,7 @@ final class SupabaseClient: ObservableObject {
 struct Participant: Encodable {
     let device_uuid: String
     let sona_id: String
+    let is_active: Bool
 }
 
 /// Row shape for `media_uploads`
