@@ -309,8 +309,164 @@ final class SupabaseClient: ObservableObject {
             .execute()
     }
     
+    // MARK: - Email
+    
+    /// Send opt-out reason message to the specified email address
+    /// This function sends an email with the participant's reason for opting out
+    /// Uses EmailJS service for reliable email delivery (free tier available)
+    func sendOptOutEmail(reason: String, to recipientEmail: String = "laasya.m1@gmail.com") async throws {
+        // Create email content
+        let subject = "Participant Opt-Out: Data Deletion Request"
+        let emailBody = """
+        A participant has opted out of the study and requested data deletion.
+        
+        User ID: \(userId.uuidString)
+        Device UUID: \(deviceUUID)
+        Timestamp: \(ISO8601DateFormatter().string(from: Date()))
+        
+        Reason for leaving:
+        \(reason.isEmpty ? "No reason provided" : reason)
+        """
+        
+        // Option 1: Try Supabase Edge Function first (if deployed)
+        let edgeFunctionURL = url.appendingPathComponent("functions/v1/send-opt-out-email")
+        var edgeRequest = URLRequest(url: edgeFunctionURL)
+        edgeRequest.httpMethod = "POST"
+        edgeRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        edgeRequest.setValue("Bearer \(anonKey)", forHTTPHeaderField: "Authorization")
+        
+        let payload: [String: Any] = [
+            "to": recipientEmail,
+            "subject": subject,
+            "body": emailBody,
+            "userId": userId.uuidString,
+            "deviceUUID": deviceUUID
+        ]
+        
+        edgeRequest.httpBody = try JSONSerialization.data(withJSONObject: payload)
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: edgeRequest)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                if (200...299).contains(httpResponse.statusCode) {
+                    print("✅ Opt-out email sent successfully via Edge Function to \(recipientEmail)")
+                    return
+                } else {
+                    let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+                    print("⚠️ Edge Function returned error (\(httpResponse.statusCode)): \(errorMessage)")
+                    // Fall through to alternative method
+                }
+            }
+        } catch {
+            print("⚠️ Edge Function not available or error: \(error.localizedDescription)")
+            // Fall through to alternative method
+        }
+        
+        // Option 2: Use EmailJS as fallback (free, no server setup required)
+        // Get EmailJS config from Config.plist or use defaults
+        let emailJSServiceID: String = {
+            guard let path = Bundle.main.path(forResource: "Config", ofType: "plist"),
+                  let plist = NSDictionary(contentsOfFile: path),
+                  let serviceID = plist["EmailJSServiceID"] as? String, !serviceID.isEmpty else {
+                // Default service ID - user should replace with their own
+                return "YOUR_EMAILJS_SERVICE_ID"
+            }
+            return serviceID
+        }()
+        
+        let emailJSTemplateID: String = {
+            guard let path = Bundle.main.path(forResource: "Config", ofType: "plist"),
+                  let plist = NSDictionary(contentsOfFile: path),
+                  let templateID = plist["EmailJSTemplateID"] as? String, !templateID.isEmpty else {
+                return "YOUR_EMAILJS_TEMPLATE_ID"
+            }
+            return templateID
+        }()
+        
+        let emailJSPublicKey: String = {
+            guard let path = Bundle.main.path(forResource: "Config", ofType: "plist"),
+                  let plist = NSDictionary(contentsOfFile: path),
+                  let publicKey = plist["EmailJSPublicKey"] as? String, !publicKey.isEmpty else {
+                return "YOUR_EMAILJS_PUBLIC_KEY"
+            }
+            return publicKey
+        }()
+        
+        // Only proceed if EmailJS is configured
+        guard emailJSServiceID != "YOUR_EMAILJS_SERVICE_ID" &&
+              emailJSTemplateID != "YOUR_EMAILJS_TEMPLATE_ID" &&
+              emailJSPublicKey != "YOUR_EMAILJS_PUBLIC_KEY" else {
+            print("❌ EmailJS not configured. Please set up EmailJS or deploy Supabase Edge Function.")
+            print("📧 Email content that would be sent:")
+            print("To: \(recipientEmail)")
+            print("Subject: \(subject)")
+            print("Body: \(emailBody)")
+            throw NSError(
+                domain: "EmailError",
+                code: 0,
+                userInfo: [NSLocalizedDescriptionKey: "Email service not configured. Please set up EmailJS in Config.plist or deploy Supabase Edge Function."]
+            )
+        }
+        
+        // Send via EmailJS
+        let emailJSURL = URL(string: "https://api.emailjs.com/api/v1.0/email/send")!
+        var emailJSRequest = URLRequest(url: emailJSURL)
+        emailJSRequest.httpMethod = "POST"
+        emailJSRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let emailJSPayload: [String: Any] = [
+            "service_id": emailJSServiceID,
+            "template_id": emailJSTemplateID,
+            "user_id": emailJSPublicKey,
+            "template_params": [
+                "to_email": recipientEmail,
+                "subject": subject,
+                "message": emailBody,
+                "user_id": userId.uuidString,
+                "device_uuid": deviceUUID
+            ]
+        ]
+        
+        emailJSRequest.httpBody = try JSONSerialization.data(withJSONObject: emailJSPayload)
+        
+        let (emailJSData, emailJSResponse) = try await URLSession.shared.data(for: emailJSRequest)
+        
+        guard let emailJSHttpResponse = emailJSResponse as? HTTPURLResponse else {
+            throw NSError(domain: "EmailError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response from EmailJS"])
+        }
+        
+        if !(200...299).contains(emailJSHttpResponse.statusCode) {
+            let errorMessage = String(data: emailJSData, encoding: .utf8) ?? "Unknown error"
+            print("❌ EmailJS error (\(emailJSHttpResponse.statusCode)): \(errorMessage)")
+            throw NSError(
+                domain: "EmailError",
+                code: emailJSHttpResponse.statusCode,
+                userInfo: [NSLocalizedDescriptionKey: "Failed to send email via EmailJS: \(errorMessage)"]
+            )
+        }
+        
+        print("✅ Opt-out email sent successfully via EmailJS to \(recipientEmail)")
+    }
+    
     /// Main opt-out method: either deletes data or marks user inactive
     func optOut(deleteData: Bool, reason: String) async throws {
+        // If deleting data, send email with the reason first
+        if deleteData {
+            do {
+                try await sendOptOutEmail(reason: reason)
+            } catch {
+                // Log detailed error but don't fail the opt-out process
+                // The opt-out should still proceed even if email fails
+                print("⚠️ Failed to send opt-out email: \(error.localizedDescription)")
+                if let nsError = error as NSError? {
+                    print("   Error domain: \(nsError.domain), code: \(nsError.code)")
+                    print("   User info: \(nsError.userInfo)")
+                }
+                // Note: We continue with opt-out even if email fails
+            }
+        }
+        
         // Either delete all data or mark as inactive
         if deleteData {
             try await deleteAllUserData()

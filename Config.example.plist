@@ -6,5 +6,11 @@
 	<string>YOUR_SUPABASE_URL_HERE</string>
 	<key>SupabaseAnonKey</key>
 	<string>YOUR_SUPABASE_ANON_KEY_HERE</string>
+	<key>EmailJSServiceID</key>
+	<string>YOUR_EMAILJS_SERVICE_ID</string>
+	<key>EmailJSTemplateID</key>
+	<string>YOUR_EMAILJS_TEMPLATE_ID</string>
+	<key>EmailJSPublicKey</key>
+	<string>YOUR_EMAILJS_PUBLIC_KEY</string>
 </dict>
 </plist>

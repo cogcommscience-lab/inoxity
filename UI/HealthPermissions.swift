@@ -10,7 +10,7 @@ import HealthKit
 
 struct PermissionScreen: View {
     private let healthStore = HKHealthStore()
-    var onPermissionGranted: () -> Void
+    var onPermissionResult: (Bool) -> Void  // Bool indicates if permissions were granted
     @AppStorage("hkAuthorized") private var hkAuthorized = false
 
     var body: some View {
@@ -67,12 +67,26 @@ struct PermissionScreen: View {
         let types: Set = [HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!]
         healthStore.requestAuthorization(toShare: [], read: types) { success, error in
             DispatchQueue.main.async {
-                if success {
+                // Check the actual authorization status, not just if the request succeeded
+                let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
+                let status = self.healthStore.authorizationStatus(for: sleepType)
+                
+                // For read permissions, .sharingAuthorized means the user granted access
+                let isAuthorized = status == .sharingAuthorized
+                
+                if isAuthorized {
                     hkAuthorized = true
-                    onPermissionGranted()
                 } else {
-                    print("❌ HealthKit permission denied: \(error?.localizedDescription ?? "Unknown error")")
+                    hkAuthorized = false
+                    if success {
+                        print("⚠️ HealthKit request succeeded but authorization not granted (status: \(status.rawValue))")
+                    } else {
+                        print("❌ HealthKit permission denied: \(error?.localizedDescription ?? "Unknown error")")
+                    }
                 }
+                
+                // Always call the callback with the result, whether granted or not
+                onPermissionResult(isAuthorized)
             }
         }
     }
