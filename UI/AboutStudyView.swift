@@ -6,14 +6,16 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct AboutStudyView: View {
     @EnvironmentObject var supabase: SupabaseClient
     
     @State private var reason: String = ""
     @State private var isSubmitting = false
-    @State private var showSuccessAlert = false
     @State private var errorMessage: String? = nil
+    
+    private let qualtricsSurveyURL = URL(string: "https://your-real-qualtrics-link-here")!
     
     var body: some View {
         NavigationStack {
@@ -91,7 +93,7 @@ struct AboutStudyView: View {
                     // Opt-out buttons
                     VStack(spacing: 16) {
                         Button {
-                            handleOptOut(deleteData: true)
+                            Task { await handleOptOut(deleteData: true) }
                         } label: {
                             Text("Opt out & delete my data")
                                 .fontWeight(.semibold)
@@ -107,7 +109,7 @@ struct AboutStudyView: View {
                         .opacity(isSubmitting ? 0.6 : 1.0)
                         
                         Button {
-                            handleOptOut(deleteData: false)
+                            Task { await handleOptOut(deleteData: false) }
                         } label: {
                             Text("Opt out but keep my data")
                                 .fontWeight(.semibold)
@@ -134,35 +136,30 @@ struct AboutStudyView: View {
                 )
             )
             .navigationBarTitleDisplayMode(.inline)
-            .alert("You've been opted out", isPresented: $showSuccessAlert) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text("Your choice has been recorded. Thank you for participating.")
-            }
         }
     }
     
-    private func handleOptOut(deleteData: Bool) {
+    @MainActor
+    private func handleOptOut(deleteData: Bool) async {
         guard !isSubmitting else { return }
         
         isSubmitting = true
         errorMessage = nil
         
-        Task {
-            do {
-                try await supabase.optOut(deleteData: deleteData, reason: reason.isEmpty ? "No reason provided" : reason)
-                
-                await MainActor.run {
-                    isSubmitting = false
-                    showSuccessAlert = true
-                }
-            } catch {
-                print("Error opting out: \(error)")
-                await MainActor.run {
-                    isSubmitting = false
-                    errorMessage = "Failed to submit your request. Please try again."
-                }
-            }
+        do {
+            // ✅ Keep your existing logic EXACTLY
+            try await supabase.optOut(
+                deleteData: deleteData,
+                reason: reason.isEmpty ? "No reason provided" : reason
+            )
+            
+            // ✅ Only after success: open Qualtrics in external Safari
+            UIApplication.shared.open(qualtricsSurveyURL, options: [:], completionHandler: nil)
+            
+        } catch {
+            errorMessage = "Something went wrong. Please try again."
         }
+        
+        isSubmitting = false
     }
 }
