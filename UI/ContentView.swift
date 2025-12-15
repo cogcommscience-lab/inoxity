@@ -9,7 +9,7 @@ import SwiftUI
 import HealthKit
 
 struct ContentView: View {
-    enum Screen { case welcome, permission, thankYou, notSharingSleepData, setup, home }
+    enum Screen { case welcome, permission, thankYou, setup, home }
     enum NavigationDestination { case home, aboutStudy, sleepSummary, settings }
 
     @State private var screen: Screen = .welcome
@@ -25,17 +25,9 @@ struct ContentView: View {
             case .welcome:
                 WelcomeScreen { screen = .permission }
             case .permission:
-                PermissionScreen { isGranted in
-                    if isGranted {
-                        screen = .thankYou
-                    } else {
-                        screen = .notSharingSleepData
-                    }
-                }
+                PermissionScreen { screen = .thankYou }
             case .thankYou:
                 ThankYouScreen { screen = .setup }
-            case .notSharingSleepData:
-                NotSharingSleepDataView { screen = .setup }
             case .setup:
                 SetupScreen(
                     initialSonaId: sonaId,

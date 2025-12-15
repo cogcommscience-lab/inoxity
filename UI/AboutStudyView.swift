@@ -11,7 +11,6 @@ import UIKit
 struct AboutStudyView: View {
     @EnvironmentObject var supabase: SupabaseClient
     
-    @State private var reason: String = ""
     @State private var isSubmitting = false
     @State private var errorMessage: String? = nil
     
@@ -38,32 +37,6 @@ struct AboutStudyView: View {
                             .font(.body)
                             .foregroundStyle(.white.opacity(0.8))
                             .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.brandCard)
-                    )
-                    
-                    // Opt-out reason section
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Why are you leaving?")
-                            .font(.headline)
-                            .foregroundStyle(.white.opacity(0.9))
-                        
-                        TextEditor(text: $reason)
-                            .frame(minHeight: 100)
-                            .padding(8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.brandBackground.opacity(0.5))
-                            )
-                            .foregroundStyle(.white)
-                            .scrollContentBackground(.hidden)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.brandPrimary.opacity(0.3), lineWidth: 1)
-                            )
                     }
                     .padding()
                     .background(
@@ -150,7 +123,7 @@ struct AboutStudyView: View {
             // ✅ Keep your existing logic EXACTLY
             try await supabase.optOut(
                 deleteData: deleteData,
-                reason: reason.isEmpty ? "No reason provided" : reason
+                reason: "No reason provided"
             )
             
             // ✅ Only after success: open Qualtrics in external Safari
