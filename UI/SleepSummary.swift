@@ -5,16 +5,13 @@
 //  Created by Rachael Kee on 11/9/25.
 //
 
+// Importing dependencies
 import SwiftUI
 import HealthKit
 import Charts
 
-// MARK: - Sleep Segment Data Structure
-struct SleepSegment {
-    let startTime: Date
-    let endTime: Date
-    let stage: String // "Deep", "REM", "Core", "Awake"
-}
+
+// MARK: Sleep Segment Data Structure
 
 struct SleepSummaryView: View {
     let sleepSummary: SleepSummary
@@ -23,6 +20,7 @@ struct SleepSummaryView: View {
     let selectedDate: Date
     let onDateChange: (Date) -> Void
     
+    // Body
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
@@ -125,7 +123,7 @@ struct SleepSummaryView: View {
                 
                 // Sync Info
                 if let syncTime = lastSyncedAt {
-                    Text("Last synced: \(formatTime(syncTime))")
+                    Text("Last refreshed: \(formatTime(syncTime))")
                         .font(.footnote)
                         .foregroundStyle(.white.opacity(0.7))
                 }
@@ -212,7 +210,8 @@ struct SleepSummaryView: View {
     }
 }
 
-// MARK: - Charts Helper View
+
+// MARK: Charts Helper View
 struct SleepChartsView: View {
     let sleepDataForDate: [SleepSegment]
     
@@ -377,7 +376,7 @@ struct SleepChartsView: View {
     }
 }
 
-// MARK: - Wrapper view that loads sleep data for the Sleep Summary page
+// MARK: Wrapper view that loads sleep data for the Sleep Summary page
 struct SleepSummaryPageView: View {
     @State private var sleepSummary: SleepSummary?
     @State private var sleepDataForDate: [SleepSegment] = []
@@ -459,7 +458,7 @@ struct SleepSummaryPageView: View {
         .task {
             await loadSleepDataForDate(selectedDate)
         }
-        .onChange(of: scenePhase) { oldPhase, phase in
+        .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 Task {
                     await loadSleepDataForDate(selectedDate)
@@ -478,7 +477,7 @@ struct SleepSummaryPageView: View {
         let dateStart = cal.startOfDay(for: date)
         let windowEnd = cal.date(byAdding: .hour, value: 12, to: dateStart)!   // date at 12:00
         let windowStart = cal.date(byAdding: .day, value: -1, to: windowEnd)!   // previous day at 12:00
-        let pred = HKQuery.predicateForSamples(withStart: windowStart, end: windowEnd, options: .strictStartDate)
+        let pred = HKQuery.predicateForSamples(withStart: windowStart, end: windowEnd, options: [])
 
         do {
             let samples: [HKCategorySample] = try await withCheckedThrowingContinuation { cont in

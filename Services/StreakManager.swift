@@ -7,87 +7,101 @@
 
 import Foundation
 
-/// Manages streak completion tracking, particularly from notification taps.
-/// Uses the same storage as HomeScreen's survey completion tracking.
 final class StreakManager {
     static let shared = StreakManager()
-    
     private init() {}
-    
-    /// UserDefaults key for storing completed streak days (same as survey completion tracking)
-    private let streakDaysKey = "completedSurveyDates"
-    
-    /// Get today's date as a normalized calendar day key (yyyy-MM-dd)
-    private func todayKey() -> String {
-        let calendar = Calendar.current
-        let now = Date()
-        let components = calendar.dateComponents([.year, .month, .day], from: now)
-        guard let normalized = calendar.date(from: components) else {
-            // Fallback: use formatter directly
-            let formatter = DateFormatter()
-            formatter.calendar = calendar
-            formatter.timeZone = calendar.timeZone
-            formatter.dateFormat = "yyyy-MM-dd"
-            return formatter.string(from: now)
-        }
-        
-        let formatter = DateFormatter()
-        formatter.calendar = calendar
-        formatter.timeZone = calendar.timeZone
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: normalized)
+
+    // ✅ Keep survey completion storage separate from streak completion storage
+    private let surveyDaysKey  = "completedSurveyDates"
+    private let streakDaysKey  = "completedStreakDates"
+
+    // These must match your HomeView @AppStorage keys
+    private let didSleepKey    = "didSleepToday"
+    private let didUploadKey   = "didUploadToday"
+
+    private static let dayKeyFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.calendar = Calendar.current
+        f.timeZone = TimeZone.current
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
+
+    private func dayKey(_ date: Date) -> String {
+        // Normalize to calendar day
+        let cal = Calendar.current
+        let comps = cal.dateComponents([.year, .month, .day], from: date)
+        let normalized = cal.date(from: comps) ?? date
+        return Self.dayKeyFormatter.string(from: normalized)
     }
-    
-    /// Get the set of completed streak days from UserDefaults
+
+    private func todayKey() -> String { dayKey(Date()) }
+
+    // MARK: Storage
+
     private var streakDays: Set<String> {
-        get {
-            let array = UserDefaults.standard.stringArray(forKey: streakDaysKey) ?? []
-            return Set(array)
-        }
-        set {
-            UserDefaults.standard.set(Array(newValue), forKey: streakDaysKey)
-            UserDefaults.standard.synchronize() // Force immediate write
-        }
+        get { Set(UserDefaults.standard.stringArray(forKey: streakDaysKey) ?? []) }
+        set { UserDefaults.standard.set(Array(newValue), forKey: streakDaysKey) }
     }
-    
-    /// Mark today's streak as completed when the user taps the evening notification.
-    /// This is idempotent: calling multiple times on the same day only updates once.
-    /// After successfully adding today's date, syncs to Supabase.
+
+    private func didSurveyToday(_ today: String) -> Bool {
+        let arr = UserDefaults.standard.stringArray(forKey: surveyDaysKey) ?? []
+        return Set(arr).contains(today)
+    }
+
+    private func didSleepToday() -> Bool {
+        UserDefaults.standard.bool(forKey: didSleepKey)
+    }
+
+    private func didUploadToday() -> Bool {
+        UserDefaults.standard.bool(forKey: didUploadKey)
+    }
+
+    private func allThreeCompletedToday() -> Bool {
+        let today = todayKey()
+        return didSleepToday() && didUploadToday() && didSurveyToday(today)
+    }
+
+    // MARK: Public API
+
+    /// Call this when the user taps the evening notification.
+    /// ✅ Will only write/upload streak if: Sleep + Survey + ST are ALL completed today.
     func markTodayCompletedFromNotification() {
         let today = todayKey()
-        var days = streakDays
-        
-        // Check if today is already counted (no double counting)
-        guard !days.contains(today) else {
-            print("📊 Streak already marked for today (\(today)); skipping")
+
+        guard allThreeCompletedToday() else {
+            print("⚠️ Streak NOT recorded: missing one or more tasks for \(today)")
+            print("   Sleep=\(didSleepToday())  Survey=\(didSurveyToday(today))  ST=\(didUploadToday())")
             return
         }
-        
-        // Add today and persist
+
+        var days = streakDays
+
+        // idempotent
+        guard !days.contains(today) else {
+            print("📊 Streak already recorded for \(today); skipping")
+            return
+        }
+
         days.insert(today)
         streakDays = days
-        
-        print("✅ Marked streak completed for \(today) from notification tap")
-        print("📊 Current streak days: \(Array(days).sorted())")
-        
-        // Sync to Supabase after successfully adding today
+
+        print("✅ Streak recorded for \(today) (all 3 tasks complete)")
         pushStreakToSupabase()
     }
-    
-    /// Push the updated streak data to Supabase.
-    /// Uses the existing Supabase client patterns for async operations.
+
+    // MARK: Supabase sync
+
     private func pushStreakToSupabase() {
-        let days = streakDays
-        let sortedDays = Array(days).sorted()
-        
+        let sortedDays = Array(streakDays).sorted()
         Task {
             do {
-                try await SupabaseClient.shared.updateStreak(streakDays: sortedDays)
+                try await SupabaseService.shared.updateStreak(streakDays: sortedDays)
                 print("✅ Streak synced to Supabase: \(sortedDays.count) days")
             } catch {
                 print("⚠️ Failed to sync streak to Supabase: \(error.localizedDescription)")
-                // Don't throw - this is best-effort sync
             }
         }
     }
 }
+

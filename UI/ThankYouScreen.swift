@@ -5,10 +5,11 @@
 //  Created by Rachael Kee on 11/9/25.
 //
 
+// Importing dependencies
 import SwiftUI
 
 struct ThankYouScreen: View {
-    var onContinue: () -> Void   // callback to pop or navigate home
+    var onContinue: () -> Void   // callback to continue
 
     var body: some View {
         VStack(spacing: 32) {
@@ -24,22 +25,22 @@ struct ThankYouScreen: View {
                 VStack(spacing: 16) {
                     Text("Congratulations! 🥳")
                         .font(.title.bold())
-                        .foregroundStyle(.white)
+                        .foregroundColor(.white)
 
                     Text("""
-                    You've officially contributed to science!👩‍🔬
+You've officially contributed to science! 👩‍🔬
 
-                    Thank you for sharing your sleep data with us, to help us better serve you and others who are interested in optimizing sleep and media health.
-                    """)
+Thank you for sharing your sleep data with us, to help us better serve you and others who are interested in optimizing sleep and media health.
+""")
                         .multilineTextAlignment(.center)
-                        .foregroundStyle(.white.opacity(0.9))
+                        .foregroundColor(.white.opacity(0.9))
                         .padding(.horizontal)
                 }
             }
 
             Spacer()
 
-            Button("Go to Home") { onContinue() }
+            Button("Continue") { onContinue() }
                 .fontWeight(.semibold)
                 .padding(.vertical, 14)
                 .frame(maxWidth: .infinity)
@@ -68,3 +69,4 @@ struct ThankYouScreen: View {
         // no-op for preview
     }
 }
+

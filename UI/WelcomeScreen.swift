@@ -5,6 +5,7 @@
 //  Created by Rachael Kee on 11/9/25.
 //
 
+// Importing dependencies
 import SwiftUI
 
 struct WelcomeScreen: View {
@@ -24,17 +25,17 @@ struct WelcomeScreen: View {
                 Text("Thank you for participating in our study! 🧠💤📱🗣️")
                     .font(.title)
                     .multilineTextAlignment(.center)
-                    .foregroundStyle(.white)
+                    .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal)
 
                 Text("""
-                Momentarily, you will be prompted to share your sleep data with our research team. We intend to use this data, anonymously, to help advance current understandings about sleep neuroscience, media studies, and communication processes.
+Momentarily, you will be prompted to share your sleep data with our research team. We intend to use this data anonymously to help advance understandings about sleep neuroscience, media studies, and communication processes.
 
-                By agreeing to share this valuable data with us, you are helping advance science!
-                """)
+By agreeing to share this valuable data with us, you are helping advance science!
+""")
                     .multilineTextAlignment(.center)
-                    .foregroundStyle(.white.opacity(0.9))
+                    .foregroundColor(.white.opacity(0.9))
                     .padding(.horizontal)
             }
 

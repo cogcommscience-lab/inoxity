@@ -5,13 +5,16 @@
 //  Created by Rachael Kee on 11/9/25.
 //
 
+// Importing dependencies
 import Foundation
 import UserNotifications
 import UIKit
 
+// Singelton set up
 final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationService()
     
+    // Centralized identifiers
     private struct IDs {
         static let category = "SURVEY_CATEGORY"
         static let surveyReminder = "DailySurveyReminder"
@@ -35,24 +38,31 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
                 }
         }
     }
+   
     
-    // MARK: - Scheduling (supports one or many surveys)
+// MARK: Scheduling (supports one or many surveys)
 
-    /// Build a survey URL with uid + defaults, preserving any existing query items.
+    // Build a survey URL with uid + defaults, preserving any existing query items.
     private func buildSurveyURL(baseURL: URL, userId: UUID, extras: [URLQueryItem] = []) -> URL {
         var comps = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
         var items = comps.queryItems ?? []
+        
+        // Prevent duplicate keys if baseURL already includes them
+        let reservedKeys: Set<String> = ["uid", "platform", "app"]
+        items.removeAll { reservedKeys.contains($0.name) }
+        
         items.append(URLQueryItem(name: "uid", value: userId.uuidString))
         items.append(URLQueryItem(name: "platform", value: "ios"))
-        items.append(URLQueryItem(name: "app", value: "kee_app"))
+        items.append(URLQueryItem(name: "app", value: "inoxity"))
         items.append(contentsOf: extras)
+        
         comps.queryItems = items
         return comps.url ?? baseURL
     }
 
-    /// NEW: Schedule (or replace) a daily survey with a unique identifier and custom text.
-    /// This handles the "today" case: if the time hasn't passed yet today, schedules for today.
-    /// If it has passed, schedules for tomorrow (via recurring trigger) and also sends one today.
+    // Schedule a daily survey with a unique identifier and custom text
+    // This handles the "today" case: if the time hasn't passed yet today, schedules for today
+    // If it has passed, schedules for tomorrow (via recurring trigger) and also sends one today
     func scheduleDailySurvey(identifier: String,
                              hour: Int,
                              minute: Int,
@@ -63,14 +73,15 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
                              extras: [URLQueryItem] = []) {
         let center = UNUserNotificationCenter.current()
 
-        // Replace any prior request with the same id (prevents duplicates)
+        // Prevents duplicates when you reschedule
         center.removePendingNotificationRequests(withIdentifiers: [identifier])
 
+        // Notification content
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
         content.sound = .default
-        content.categoryIdentifier = "SURVEY_CATEGORY"
+        content.categoryIdentifier = IDs.category
         
         // Build userInfo with URL and notification type for streak tracking
         // Tag bedtime/evening notification so we can detect it when tapped
@@ -109,7 +120,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
             // Time hasn't passed today → recurring will fire today, skip duplicate
             print("🔔 Scheduling only recurring \(identifier) for today/future.")
         } else {
-            // Time already passed → schedule one quick catch-up, then tomorrow's recurring covers future days
+            // If time already passed schedule one quick catch-up, then tomorrow's recurring covers future days
             let todayIdentifier = "\(identifier).today"
             center.removePendingNotificationRequests(withIdentifiers: [todayIdentifier])
             
@@ -125,20 +136,20 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    /// Backwards-compatible helper: schedules a single daily survey using a default identifier.
+    // Backwards-compatible helper: schedules a single daily survey using a default identifier
     func scheduleDailySurvey(hour: Int,
                              minute: Int,
                              baseURL: URL,
                              userId: UUID) {
-        scheduleDailySurvey(identifier: "DailySurveyReminder",
+        scheduleDailySurvey(identifier: IDs.surveyReminder,
                             hour: hour,
                             minute: minute,
                             baseURL: baseURL,
                             userId: userId)
     }
     
-    /// Helper to reschedule evening notification based on bedtimeMinutes
-    /// Calculates notification time as 60 minutes before bedtime
+    // Helper to reschedule evening notification based on bedtimeMinutes
+    // Calculates notification time as 60 minutes before bedtime
     func rescheduleEveningNotification(bedtimeMinutes: Int, surveyURL: URL, userId: UUID) {
         let bedtimeHour = max(0, min(23, bedtimeMinutes / 60))
         let bedtimeMinute = max(0, min(59, bedtimeMinutes % 60))
@@ -159,13 +170,13 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         )
     }
 
-    // MARK: - Categories & Actions
+// MARK: Categories & Actions
     
     private func registerCategories(on center: UNUserNotificationCenter) {
         let take = UNNotificationAction(
             identifier: IDs.actionTake,
             title: "Take Survey",
-            options: [.foreground] // opens the app
+            options: [.foreground] // opens the app then the notification
         )
         let snooze = UNNotificationAction(
             identifier: IDs.actionSnooze,
@@ -181,9 +192,10 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         center.setNotificationCategories([category])
     }
     
-    // MARK: - UNUserNotificationCenterDelegate
     
-    // Show banner/sound even if app is foregrounded
+// MARK: - UNUserNotificationCenterDelegate
+    
+// Show banner/sound even if app is foregrounded
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
@@ -200,7 +212,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         // Check if this is the bedtime/evening notification tap for streak tracking
         // Detect using either the identifier or userInfo["type"]
         let request = response.notification.request
-        let isBedtimeNotification = request.identifier == "EMA_Evening" || 
+        let isBedtimeNotification = request.identifier == "EMA_Evening" ||
                                      request.identifier.hasPrefix("EMA_Evening") ||
                                      (info["type"] as? String) == "bedtimeReminder"
         
@@ -215,7 +227,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
             // Re-fire once after 15 minutes
             let content = response.notification.request.content.mutableCopy() as! UNMutableNotificationContent
             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 15 * 60, repeats: false)
-            let id = IDs.surveyReminder + ".snooze.\(UUID().uuidString)"
+            let id = "\(request.identifier).snooze.\(UUID().uuidString)"
             let req = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
             center.add(req)
 
@@ -233,3 +245,5 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         completionHandler()
     }
 }
+
+

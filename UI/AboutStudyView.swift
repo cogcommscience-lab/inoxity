@@ -5,21 +5,45 @@
 //  Created on 11/9/25.
 //
 
+// Importing dependencies
 import SwiftUI
 import UIKit
 
+// Pulling Qualtrics opt-out survey URL from Config.plist
+enum AppConfig {
+    static var OptOutURL: URL? {
+        guard
+            let urlString = Bundle.main.object(forInfoDictionaryKey: "QualtricsOptOutURL") as? String,
+            !urlString.isEmpty
+        else {
+            return nil
+        }
+        return URL(string: urlString)
+    }
+}
+
+// State
 struct AboutStudyView: View {
-    @EnvironmentObject var supabase: SupabaseClient
+    @EnvironmentObject var supabase: SupabaseService
     
     @State private var isSubmitting = false
     @State private var errorMessage: String? = nil
+    @State private var optOutReason: String = ""
     
-    private let qualtricsSurveyURL = URL(string: "https://your-real-qualtrics-link-here")!
+    // Confirmation UI state
+    @State private var showConfirmDelete = false
+    @State private var showConfirmKeep = false
+    @State private var showSuccessAlert = false
     
+    // Optional: open Qualtrics after opt-out (don’t crash if not configured)
+    private let qualtricsSurveyURL = AppConfig.OptOutURL
+    
+    // Body
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
+                    
                     // Title
                     Text("About This Study")
                         .font(.largeTitle)
@@ -63,10 +87,35 @@ struct AboutStudyView: View {
                         .padding()
                     }
                     
+                    // Opt-out reason box
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Optional: Why are you leaving?")
+                            .font(.headline)
+                            .foregroundStyle(.white.opacity(0.9))
+                        
+                        Text("This feedback is stored separately and not linked to your identity. It may remain even if you delete your study data.")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.7))
+                        
+                        TextEditor(text: $optOutReason)
+                            .frame(minHeight: 120)
+                            .padding(10)
+                            .scrollContentBackground(.hidden)
+                            .background(Color.white.opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .foregroundStyle(.white)
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.brandCard)
+                    )
+                    
                     // Opt-out buttons
                     VStack(spacing: 16) {
+                        
                         Button {
-                            Task { await handleOptOut(deleteData: true) }
+                            showConfirmDelete = true
                         } label: {
                             Text("Opt out & delete my data")
                                 .fontWeight(.semibold)
@@ -80,9 +129,21 @@ struct AboutStudyView: View {
                         }
                         .disabled(isSubmitting)
                         .opacity(isSubmitting ? 0.6 : 1.0)
+                        .confirmationDialog(
+                            "Delete study data?",
+                            isPresented: $showConfirmDelete,
+                            titleVisibility: .visible
+                        ) {
+                            Button("Delete my data", role: .destructive) {
+                                Task { await handleOptOut(deleteData: true) }
+                            }
+                            Button("Cancel", role: .cancel) {}
+                        } message: {
+                            Text("This will permanently delete your uploaded data from the study database and storage.")
+                        }
                         
                         Button {
-                            Task { await handleOptOut(deleteData: false) }
+                            showConfirmKeep = true
                         } label: {
                             Text("Opt out but keep my data")
                                 .fontWeight(.semibold)
@@ -96,6 +157,19 @@ struct AboutStudyView: View {
                         }
                         .disabled(isSubmitting)
                         .opacity(isSubmitting ? 0.6 : 1.0)
+                        .confirmationDialog(
+                            "Opt out and keep existing data?",
+                            isPresented: $showConfirmKeep,
+                            titleVisibility: .visible
+                        ) {
+                            Button("Opt out", role: .destructive) {
+                                Task { await handleOptOut(deleteData: false) }
+                            }
+                            Button("Cancel", role: .cancel) {}
+                        } message: {
+                            Text("You’ll stop contributing new data, but your existing study data will remain included.")
+                        }
+                        
                     }
                     .padding(.horizontal)
                 }
@@ -109,9 +183,15 @@ struct AboutStudyView: View {
                 )
             )
             .navigationBarTitleDisplayMode(.inline)
+            .alert("You're opted out", isPresented: $showSuccessAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Your opt-out request was processed successfully.")
+            }
         }
     }
     
+    // Opt-out function
     @MainActor
     private func handleOptOut(deleteData: Bool) async {
         guard !isSubmitting else { return }
@@ -120,19 +200,31 @@ struct AboutStudyView: View {
         errorMessage = nil
         
         do {
-            // ✅ Keep your existing logic EXACTLY
-            try await supabase.optOut(
-                deleteData: deleteData,
-                reason: "No reason provided"
-            )
+            // 1) Save opt-out reason FIRST (best-effort)
+            do {
+                try await supabase.submitOptOutFeedback(
+                    reason: optOutReason,
+                    deleteRequested: deleteData
+                )
+            } catch {
+                // Don’t block opting out if feedback write fails
+                print("⚠️ Failed to save opt-out reason: \(error.localizedDescription)")
+            }
             
-            // ✅ Only after success: open Qualtrics in external Safari
-            UIApplication.shared.open(qualtricsSurveyURL, options: [:], completionHandler: nil)
+            // 2) Then process opt-out
+            try await supabase.optOut(deleteData: deleteData)
+            
+            showSuccessAlert = true
+            
+            if let url = qualtricsSurveyURL {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            } else {
+                print("⚠️ QualtricsOptOutURL not configured in Config.plist")
+            }
             
         } catch {
+            print("❌ Opt-out failed:", error)
             errorMessage = "Something went wrong. Please try again."
         }
-        
-        isSubmitting = false
     }
 }
